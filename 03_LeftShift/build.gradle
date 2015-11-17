@@ -1,0 +1,8 @@
+task print1 << {
+    println "test 1"
+}
+
+// これは適切ではない書き方
+task print2 {
+    println "test 2"
+}

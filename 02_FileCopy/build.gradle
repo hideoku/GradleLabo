@@ -1,0 +1,27 @@
+task copyByGradle(type: Copy) {
+    from "org/original1.txt"
+    into "dest"
+}
+
+// ------------------------------
+
+task copyByGroovy << {
+    new File("dest/original2.txt") << new File("org/original2.txt").readBytes()
+}
+
+// ------------------------------
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'commons-io:commons-io:2.4'
+    }
+}
+
+import org.apache.commons.io.FileUtils
+
+task copyByJava << {
+    FileUtils.copyFile(new File("org/original3.txt"), new File("dest/original3.txt"))
+}

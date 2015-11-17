@@ -1,0 +1,40 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'org.apache.poi:poi:3.13'
+        classpath 'org.apache.poi:poi-ooxml:3.13'
+    }
+}
+
+import org.apache.poi.ss.usermodel.*
+
+task generateMessageIdJava << {
+
+    Workbook workbook = WorkbookFactory.create(new File("メッセージマスタ.xls"))
+    Sheet sheet = workbook.getSheetAt(0)
+
+    new File("MessageId.java").withWriter("UTF-8") { writer ->
+
+        writer << "package sample.constants;\n\n"
+        writer << "public class MessageId {\n\n"
+
+        (3 .. sheet.getLastRowNum()).each { rownum ->
+            Row row = sheet.getRow(rownum)
+
+            String messageId = row.getCell(0).getStringCellValue()
+
+            // メッセージIDが記載されていない行は書き出さない
+            if (messageId?.length() == 0) return
+
+            String message = row.getCell(1).getStringCellValue()
+
+            writer << "    /** $message */\n"
+            writer << "    public static final String $messageId = \"$messageId\";\n"
+            writer << "\n"
+        }
+
+        writer << "}"
+    }
+}
