@@ -1,0 +1,6 @@
+task checkGoromaru << {
+    // HTTP リクエストを送信し、レスポンス文字列を取得する
+    String yahooTopPage = new URL("http://yahoo.co.jp").text
+
+    println yahooTopPage.contains("五郎丸") ? "<<Goromaru!!>>" : "<<No Goromaru>>"
+}

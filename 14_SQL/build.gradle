@@ -1,0 +1,74 @@
+repositories {
+    mavenCentral()
+}
+
+/* Gradle で JDBC ドライバーを使う時のおまじない */
+configurations {
+    driver
+}
+dependencies {
+    driver 'com.h2database:h2:1.4.190'
+}
+// JDBC ドライバーをクラスローダーに追加する
+URLClassLoader loader = GroovyObject.class.classLoader
+configurations.driver.each {File file ->
+    loader.addURL(file.toURI().toURL())
+}
+/* おまじないここまで */
+
+import groovy.sql.Sql
+
+task sqlSample << {
+    /*
+     * H2 DB のインスタンスをメモリ上に作成する
+     * （mem と指定することでオンメモリ化）
+     */
+    def sql = Sql.newInstance("jdbc:h2:mem:", "org.h2.Driver")
+
+    /* EMP テーブルを作成する */
+    sql.execute """
+        CREATE TABLE EMP (
+          EMP_NO VARCHAR(3),
+          EMP_NAME VARCHAR(20),
+          DEPT_NO VARCHAR(2)
+        )
+    """
+
+    /* DEPT テーブルを作成する */
+    sql.execute """
+        CREATE TABLE DEPT (
+          DEPT_NO VARCHAR(2),
+          DEPT_NAME VARCHAR(20)
+        )
+    """
+
+    /* EMP テーブルデータをCSVファイルから投入する */
+    // emp.csv を１行ずつ読み込む
+    file('data/emp.csv').eachLine(0) { String line, int rowNum ->
+        // 1行目はヘッダ行なので読み飛ばし
+        if (rowNum == 0) return
+
+        // CSV をカンマ区切りでデータ分割する
+        String[] data = line.split(',')
+
+        // INSERT 文を発行する
+        sql.execute "INSERT INTO EMP VALUES (${data[0]}, ${data[1]}, ${data[2]})"
+    }
+
+    /* DEPT テーブルデータをCSVファイルから投入する */
+    file('data/dept.csv').eachLine(0) { String line, int rowNum ->
+        // 1行目はヘッダ行なので読み飛ばし
+        if (rowNum == 0) return
+
+        String[] data = line.split(',')
+
+        sql.execute "INSERT INTO DEPT VALUES (${data[0]}, ${data[1]})"
+    }
+
+    /* SELECT 文を発行して、CREATE TABLE, INSERT が正しくできたか確認してみる */
+    println "<<Employee List>>"
+    sql.eachRow("""SELECT E.EMP_NO, E.EMP_NAME, D.DEPT_NAME
+                      FROM EMP E, DEPT D WHERE E.DEPT_NO = D.DEPT_NO""") { row ->
+        println "${row.emp_no}:${row.emp_name} (${row.dept_name})"
+    }
+}
