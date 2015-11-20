@@ -1,0 +1,29 @@
+import groovy.json.JsonSlurper
+
+task outputRedmineIssues << {
+    String apiKey = "720af9fb9107dffce2cb9ba3eaf25132fcdbd980"
+    String requestUrl = "http://192.168.56.2/issues.json?key=${apiKey}"
+
+    // HTTP リクエストを送信し、レスポンス文字列を取得する
+    String jsonstr = new URL(requestUrl).text
+
+    // JSON 文字列をオブジェクトに変換する
+    def jsonRoot = new JsonSlurper().parseText(jsonstr)
+
+    // jsonRoot は groovy.json.internal.LazyMap というクラスのインスタンス
+    // マイナーなクラスなので def で型宣言なしで取得しておく
+
+    // チケットの数分、その内容を出力する
+    jsonRoot.issues.each { issue ->
+        println "#${issue.id}:${issue.subject}(${issue.assigned_to.name})"
+    }
+}
+
+/*
+ * デフォルトタスクとして outputRedmineIssues タスクを設定する
+ * デフォルトタスクを設定することで、以下の２つのコマンドが同じ意味となる（タスク指定が不要で実行可能）
+ *
+ * $ gradle outputRedmineIssues
+ * $ gradle
+ */
+defaultTasks "outputRedmineIssues"
