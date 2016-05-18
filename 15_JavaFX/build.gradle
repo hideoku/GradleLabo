@@ -1,0 +1,8 @@
+import com.sample.Launcher
+import javafx.application.Application
+
+task launchJavaFX << {
+
+    Application.launch(Launcher.class, null)
+
+}
